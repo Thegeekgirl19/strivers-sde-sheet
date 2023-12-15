@@ -1,0 +1,65 @@
+package servicev2.impl.generic;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import com.ezdi.ocr.dto.common.Line;
+
+import servicev2.api.ColumnSeparator;
+
+public class GenericColumnSeparator implements ColumnSeparator
+{
+	@Override
+	public double getVerticalLineXCoordinate(List<Line> segmentLines)
+	{
+		List<Double> list1 = new ArrayList<>();
+		Map<Double, Integer> map = new TreeMap<>();
+
+		for (Line l : segmentLines)
+		{
+			if (l.getVertices().get(2).getY() < 0.175
+					|| l.getVertices().get(3).getY() > 0.9)
+			{
+				//				segmentLines.remove(l);
+				continue;
+			}
+
+			insertX(map, 1, l.getVertices().get(0).getX());
+			insertX(map, -1, l.getVertices().get(1).getX());
+		}
+
+		list1.addAll(map.keySet());
+		for (int i = 1; i < list1.size() - 1; i++)
+		{
+			map.put(list1.get(i), map.get(list1.get(i - 1)) + map.get(list1.get(i)));
+		}
+
+		double minscore = map.get(list1.get(0));
+		int minInd = 0;
+
+		for (int i = 1; i < list1.size() - 1; i++)
+		{
+			if (minscore > map.get(list1.get(i)))
+			{
+				minscore = map.get(list1.get(i));
+				minInd = i;
+			}
+		}
+		//		System.out.println((list1.get(minInd) + list1.get(minInd + 1)) / 2);
+		return (list1.get(minInd) + list1.get(minInd + 1)) / 2;
+	}
+
+	private void insertX(Map<Double, Integer> map, int value, double x)
+	{
+		if (map.containsKey(x))
+		{
+			map.put(x, map.get(x) + value);
+		}
+		else
+		{
+			map.put(x, value);
+		}
+	}
+}

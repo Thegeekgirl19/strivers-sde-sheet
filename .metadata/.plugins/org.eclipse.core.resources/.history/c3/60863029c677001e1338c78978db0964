@@ -1,0 +1,26 @@
+package com.ezdi.ocr.dto.common;
+
+import java.util.List;
+
+public class Block extends BoundingBox
+{
+	private String		text;
+	private List<Word>	words;
+
+	public Block(List<Point> vertices, BlockType type, List<Word> words, String text)
+	{
+		super(vertices, type);
+		this.words = words;
+		this.text = text;
+	}
+
+	public String getText()
+	{
+		return text;
+	}
+
+	public List<Word> getWords()
+	{
+		return words;
+	}
+}

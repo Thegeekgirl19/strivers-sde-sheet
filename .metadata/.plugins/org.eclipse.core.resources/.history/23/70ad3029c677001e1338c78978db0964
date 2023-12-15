@@ -1,0 +1,37 @@
+package com.ezdi.ocr.dto.common;
+
+import java.util.List;
+
+/**
+ * @startuml
+ * Alice -> Bob : Hell
+ * @enduml
+ */
+
+public class Line extends BoundingBox
+{
+	private List<Word> words;
+
+	public Line(List<Point> vertices, List<Word> words)
+	{
+		super(vertices, BlockType.LINE);
+		this.words = words;
+	}
+
+	public String getText()
+	{
+		StringBuilder sb = new StringBuilder();
+		for (Word word : words)
+		{
+			sb.append(word);
+			sb.append(" ");
+		}
+
+		return sb.toString();
+	}
+
+	public List<Word> getWords()
+	{
+		return words;
+	}
+}

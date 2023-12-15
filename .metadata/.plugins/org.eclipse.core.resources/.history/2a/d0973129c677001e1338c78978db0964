@@ -1,0 +1,144 @@
+package com.ezdi.ocr.pdftotext.separator;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import com.ezdi.ocr.dto.common.Line;
+import com.ezdi.ocr.dto.common.Point;
+import com.ezdi.ocr.dto.common.Word;
+import com.ezdi.ocr.dto.pdftotext.Block;
+import com.ezdi.ocr.dto.pdftotext.DualIdentifiedPage;
+import com.ezdi.ocr.dto.pdftotext.Page;
+import com.ezdi.ocr.dto.pdftotext.Paragraph;
+import com.ezdi.ocr.utils.Utils;
+
+public class ColumnSeparator
+{
+	public static List<DualIdentifiedPage> getCorrectedPages(Collection<Page> pages)
+	{
+		double separatorX = getVerticalLineXCoordinate(pages);
+
+		List<DualIdentifiedPage> dualPages = new ArrayList<>();
+		for (Page page : pages)
+		{
+			int pageNum = page.getIndex();
+
+			List<Line> left = new ArrayList<>();
+			List<Line> right = new ArrayList<>();
+			List<Line> other = new ArrayList<>();
+			boolean moveAllToOthers = false;
+
+			for (Block block : page.getBlocks())
+			{
+				for (Paragraph p : block.getParagraphs())
+				{
+					for (Line l : p.getLines())
+					{
+//						if (l.getText().startsWith("Electronically "))
+//						{
+//							moveAllToOthers = true;
+//						}
+//
+//						if (moveAllToOthers)
+//						{
+//							other.add(l);
+//						}
+//						else
+//						{
+							//							if (l.getVertices().get(0).getX() >= separatorX)
+							//							//							if (l.getVertices().get(2).getX() <= separatorX)
+							//							{
+							//								right.add(l);
+							//								//								left.add(l);
+							//							}
+							//							else
+							//							{
+							//								left.add(l);
+							//								//								right.add(l);
+							//							}
+
+							boolean isLineInBothCols = l.getVertices().get(0).getX() < separatorX
+									&& l.getVertices().get(2).getX() > separatorX;
+							if (!isLineInBothCols)
+							{
+								if (l.getVertices().get(0).getX() >= separatorX)
+								{
+									right.add(l);
+								}
+								else
+								{
+									left.add(l);
+								}
+							}
+							else
+							{
+								List<Word> leftWords = new ArrayList<>();
+								List<Word> rightWords = new ArrayList<>();
+
+								for (Word w : l.getWords())
+								{
+									if (w.getVertices().get(0).getX() >= separatorX)
+									{
+										rightWords.add(w);
+									}
+									else
+									{
+										leftWords.add(w);
+									}
+								}
+
+								right.add(new Line(Utils.getVertices(rightWords), rightWords));
+							}
+//						}
+					}
+				}
+			}
+
+			dualPages.add(new DualIdentifiedPage(pageNum, left, right, other));
+		}
+
+		return dualPages;
+	}
+
+	public static double getVerticalLineXCoordinate(Collection<Page> pages)
+	{
+		for (Page page : pages)
+		{
+			for (Block block : page.getBlocks())
+			{
+				for (Paragraph p : block.getParagraphs())
+				{
+					for (Line l : p.getLines())
+					{
+						if (l.getText().startsWith("Problem List/Past Medical History") 
+							|| l.getText().startsWith("Follow-up Instructions to Patient/Family"))
+						{
+							return l.getVertices().get(0).getX() - 0.001;
+						}
+					}
+				}
+			}
+		}
+
+		System.err.println("X not found");
+		return 1.0;
+	}
+
+	public static List<Point> getIdentifierVertices(double separatorX)
+	{
+		List<Point> vertices = new ArrayList<>();
+
+		//		// Page1		      
+		//			double xMin = 0.357, xMax = xMin + 0.001, yMin = 0.22, yMax = yMin + 0.001;
+		//			// Other pages        
+		//				double xMin = 0.357, xMax = xMin + 0.001, yMin = 0.192, yMax = yMin + 0.001;
+		double xMin = separatorX, xMax = xMin + 0.001, yMin = 0.30, yMax = yMin + 0.001;
+		vertices.add(new Point(xMin, yMin));
+		vertices.add(new Point(xMax, yMin));
+		vertices.add(new Point(xMax, yMax));
+		vertices.add(new Point(xMin, yMax));
+		return vertices;
+
+	}
+}

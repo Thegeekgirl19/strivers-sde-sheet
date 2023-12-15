@@ -1,0 +1,38 @@
+package com.ezdi.ocr.dto.common;
+
+import java.util.List;
+
+public class Page
+{
+	private int			index;
+	private List<Block>	blocks;
+
+	public Page(int index, List<Block> blocks)
+	{
+		this.index = index;
+		this.blocks = blocks;
+	}
+
+	public int getIndex()
+	{
+		return index;
+	}
+
+	public String getText()
+	{
+		String val = "";
+
+		for (Block block : blocks)
+		{
+			//			System.out.println("---------New Block---------");
+			val = val + block.getText() + "\n";
+		}
+
+		return val;
+	}
+
+	public List<Block> getBlocks()
+	{
+		return blocks;
+	}
+}

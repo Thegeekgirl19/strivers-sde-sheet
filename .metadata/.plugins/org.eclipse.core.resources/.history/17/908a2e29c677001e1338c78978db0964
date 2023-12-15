@@ -1,0 +1,36 @@
+package com.ezdi.ocr.utils;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.ezdi.ocr.dto.common.BoundingBox;
+import com.ezdi.ocr.dto.common.Point;
+
+public class Utils
+{
+	public static <E extends BoundingBox> List<Point> getVertices(List<E> objects)
+	{
+		double minX = Double.MAX_VALUE;
+		double minY = Double.MAX_VALUE;
+		double maxX = Double.MIN_VALUE;
+		double maxY = Double.MIN_VALUE;
+
+		for (BoundingBox e : objects)
+		{
+			for (Point p : e.getVertices())
+			{
+				minX = Math.min(p.getX(), minX);
+				maxX = Math.max(p.getX(), maxX);
+				minY = Math.min(p.getY(), minY);
+				maxY = Math.max(p.getY(), maxY);
+			}
+		}
+
+		List<Point> vertices = new ArrayList<>();
+		vertices.add(new Point(minX, minY));
+		vertices.add(new Point(maxX, minY));
+		vertices.add(new Point(maxX, maxY));
+		vertices.add(new Point(minX, maxY));
+		return vertices;
+	}
+}

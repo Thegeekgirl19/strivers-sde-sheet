@@ -1,0 +1,24 @@
+package com.ezdi.ocr.dto.pdftotext;
+
+import java.util.List;
+
+import com.ezdi.ocr.dto.common.BlockType;
+import com.ezdi.ocr.dto.common.BoundingBox;
+import com.ezdi.ocr.dto.common.Line;
+import com.ezdi.ocr.dto.common.Point;
+
+public class Paragraph extends BoundingBox
+{
+	private List<Line> lines;
+
+	public Paragraph(List<Point> vertices, List<Line> lines)
+	{
+		super(vertices, BlockType.PARAGRAPH);
+		this.lines = lines;
+	}
+
+	public List<Line> getLines()
+	{
+		return lines;
+	}
+}

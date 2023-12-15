@@ -1,0 +1,26 @@
+package com.ezdi.ocr.dto.common;
+
+import java.util.List;
+
+public class Word extends BoundingBox
+{
+	private String value;
+
+	public Word(List<Point> vertices, String value)
+	{
+		super(vertices, BlockType.WORD);
+		this.value = value;
+	}
+
+	public String getValue()
+	{
+		return value;
+	}
+
+	@Override
+	public String toString()
+	{
+		return value;
+	}
+
+}

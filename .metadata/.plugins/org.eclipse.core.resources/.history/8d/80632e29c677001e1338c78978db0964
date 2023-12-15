@@ -1,0 +1,161 @@
+package com.ezdi.ocr.utils;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+
+public class PHSDemographics
+{
+	public static void main(String[] args) throws IOException
+	{
+		for (File file : new File("/home/vivekkumar/Downloads/Sample-20221221T121018Z-001/Sample/Text2").listFiles())
+		{
+			String name = file.getName();
+			String patientName = "";
+			String dob = "";
+			String facility = "";
+			String mrn = "";
+			String dos = "";
+			String provider = "";
+			String gender = detectGender(Files.readAllLines(file.toPath()));
+			String docType = "";
+
+			String cptCodes = "";
+
+			for (String line : Files.readAllLines(file.toPath()))
+			{
+				if (line.startsWith("HISTORY AND PHYSICAL")
+						|| line.startsWith("PROGRESS NOTE"))
+				{
+					docType = line;
+					break;
+				}
+
+				if (line.startsWith("PATIENT:"))
+				{
+					patientName = line.substring("PATIENT:".length() + 1, line.indexOf("(")).trim();
+					dob = line.substring(line.indexOf("(") + 1, line.indexOf(")"));
+				}
+				if (line.startsWith("FACILITY:"))
+				{
+					facility = line.substring("FACILITY:".length() + 1, line.length()).trim();
+				}
+				if (line.startsWith("CREATED BY:"))
+				{
+					provider = line.substring("CREATED BY:".length() + 1, line.length()).trim();
+				}
+				if (line.startsWith("GPM MRN:"))
+				{
+					mrn = line.substring("GPM MRN:".length() + 1, line.indexOf("(")).trim();
+				}
+				if (line.startsWith("DOS:"))
+				{
+					dos = line.substring("DOS:".length() + 1, line.length()).trim();
+				}
+			}
+
+			boolean start = false;
+			//			for (String line : Files.readAllLines(file.toPath()))
+			//			{
+			//				if (line.startsWith("CPT Codes"))
+			//				{
+			//					start = true;
+			//					continue;
+			//				}
+			//				else if (line.startsWith("ICD Codes"))
+			//				{
+			//					start = false;
+			//					break;
+			//				}
+			//
+			//				if (start)
+			//				{
+			//					cptCodes += line.trim();
+			//				}
+			//			}
+			//			System.out.println(name + "\t" + cptCodes);
+
+			for (String line : Files.readAllLines(file.toPath()))
+			{
+				if (line.startsWith("ICD Codes"))
+				{
+					start = true;
+					continue;
+				}
+				else if (line.startsWith("Plan:")
+						|| line.startsWith("Pharmacy Orders:"))
+				{
+					start = false;
+					break;
+				}
+
+				if (start)
+				{
+					if (line.contains("/")
+							&& line.contains(":"))
+					{
+						//						System.out.println(line);
+						cptCodes += line.substring(line.indexOf("/") + 1, line.indexOf(":")).trim()+", ";
+					}
+				}
+			}
+			System.out.println(name + "\t" + cptCodes);
+
+			//			System.out.println(
+			//					name + "\t" + patientName + "\t" + dob + "\t" + facility + "\t" + mrn + "\t" + dos + "\t" + provider + "\t" + gender + "\t" + docType);
+
+		}
+	}
+
+	private static String detectGender(List<String> allLines)
+	{
+		List<String> selectedLines = new ArrayList<>();
+		boolean start = false;
+		for (String line : allLines)
+		{
+			if (line.toLowerCase().startsWith("History Of Present Illness".toLowerCase()))
+			{
+				start = true;
+			}
+			else if (line.equalsIgnoreCase("REVIEW OF SYSTEMS"))
+			{
+				start = false;
+				break;
+			}
+			if (start)
+			{
+				selectedLines.add(line.toLowerCase());
+			}
+
+		}
+
+		int heCount = 0;
+		int sheCount = 0;
+
+		Pattern hePattern = Pattern.compile("\\b(he|him|his|man|male)\\b");
+		Pattern shePattern = Pattern.compile("\\b(she|her|woman|female)\\b");
+
+		for (String line : selectedLines)
+		{
+			heCount += hePattern.matcher(line).results().count();
+			sheCount += shePattern.matcher(line).results().count();
+		}
+
+		if (heCount > sheCount)
+		{
+			return "M";
+		}
+		else if (sheCount > heCount)
+		{
+			return "F";
+		}
+		else
+		{
+			return "";
+		}
+	}
+
+}

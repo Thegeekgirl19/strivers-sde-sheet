@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<item key="org.eclipse.egit.ui.internal.clone.GitSelectWizardPageWizardSel" value="0"/>
+	<item key="GitSelectRepositoryPage.lastRepository" value="/home/trishalaswain/git/ezcac-knowledgemapping-miscellaneous-repo-personal/.git"/>
+	<list key="EGit.KnownHosts">
+		<item value="bitbucket.org"/>
+		<item value="github.com"/>
+		<item value="git.eclipse.org"/>
+		<item value="git-codecommit.us-east-1.amazonaws.com"/>
+	</list>
+	<list key="RepositorySelectionPage.UsedUris">
+		<item value="https://git-codecommit.us-east-1.amazonaws.com/v1/repos/ezcac-knowledgemapping-miscellaneous-repo"/>
+	</list>
+	<section name="GitImportWizard">
+		<item key="GitProjectsImportPage.STORE_NESTED_PROJECTS" value="true"/>
+	</section>
+	<section name="org.eclipse.egit.ui.internal.pull.PullResultDialog.dialogBounds">
+		<item key="DIALOG_X_ORIGIN" value="746"/>
+		<item key="DIALOG_Y_ORIGIN" value="390"/>
+	</section>
+</section>

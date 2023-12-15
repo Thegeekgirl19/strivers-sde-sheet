@@ -1,0 +1,128 @@
+package com.ezdi.ocr.amazon.separator;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import com.ezdi.ocr.dto.common.Block;
+import com.ezdi.ocr.dto.common.BlockType;
+import com.ezdi.ocr.dto.common.DualIdentifiedPage;
+import com.ezdi.ocr.dto.common.Page;
+import com.ezdi.ocr.dto.common.Point;
+
+public class ColumnSeparator
+{
+	public static List<DualIdentifiedPage> getCorrectedPages(Collection<Page> pages)
+	{
+		double separatorX = getVerticalLineXCoordinate(pages);
+
+		List<DualIdentifiedPage> dualPages = new ArrayList<>();
+		for (Page page : pages)
+		{
+			int pageNum = page.getIndex();
+			//				System.out.println(pageNum);
+
+			double startingY = 0.192;
+			if (pageNum == 1)
+			{
+				startingY = 0.22;
+			}
+
+			List<Block> headers = new ArrayList<>();
+			List<Block> footers = new ArrayList<>();
+
+			for (Block block : page.getBlocks())
+			{
+				if (block.getType() != BlockType.LINE
+						|| block.getVertices().get(2).getY() >= startingY || block.getVertices().get(2).getY() < 0.032)
+				{
+					continue;
+				}
+
+				headers.add(block);
+			}
+
+			List<Block> left = new ArrayList<>();
+			List<Block> right = new ArrayList<>();
+			List<Block> other = new ArrayList<>();
+			boolean moveAllToOthers = false;
+
+			for (Block block : page.getBlocks())
+			{
+				if (block.getType() != BlockType.LINE)
+				{
+					continue;
+				}
+
+				if (block.getVertices().get(2).getY() < startingY)
+				{
+					continue;
+				}
+
+				if (block.getText().startsWith("ADDENDUM"))
+				{
+					moveAllToOthers = true;
+				}
+
+				if (moveAllToOthers)
+				{
+					other.add(block);
+				}
+				else
+				{
+					if (block.getVertices().get(0).getX() >= separatorX)
+					{
+						right.add(block);
+					}
+					else
+					{
+						left.add(block);
+					}
+				}
+			}
+
+			dualPages.add(new DualIdentifiedPage(pageNum, headers, left, right, other, footers));
+		}
+
+		return dualPages;
+	}
+
+	public static double getVerticalLineXCoordinate(Collection<Page> pages)
+	{
+		for (Page page : pages)
+		{
+			for (Block block : page.getBlocks())
+			{
+				if (block.getType() != BlockType.LINE)
+				{
+					continue;
+				}
+
+				if (block.getText().startsWith("Collaborating Physician:"))
+				{
+					return block.getVertices().get(0).getX() - 0.026;
+				}
+			}
+		}
+
+		System.err.println("X not found");
+		return 0.357;
+	}
+
+	public static List<Point> getIdentifierVertices(double separatorX)
+	{
+		List<Point> vertices = new ArrayList<>();
+
+		//		// Page1		      
+		//			double xMin = 0.357, xMax = xMin + 0.001, yMin = 0.22, yMax = yMin + 0.001;
+		//			// Other pages        
+		//				double xMin = 0.357, xMax = xMin + 0.001, yMin = 0.192, yMax = yMin + 0.001;
+		double xMin = separatorX, xMax = xMin + 0.001, yMin = 0.22, yMax = yMin + 0.001;
+		vertices.add(new Point(xMin, yMin));
+		vertices.add(new Point(xMax, yMin));
+		vertices.add(new Point(xMax, yMax));
+		vertices.add(new Point(xMin, yMax));
+		return vertices;
+
+	}
+}

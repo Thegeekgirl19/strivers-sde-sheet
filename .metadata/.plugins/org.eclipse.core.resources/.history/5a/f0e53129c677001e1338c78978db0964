@@ -1,0 +1,42 @@
+package com.ezdi.ocr.pdftotext.highlight;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.List;
+
+import org.xml.sax.SAXException;
+
+import com.ezdi.ocr.dto.pdftotext.DualIdentifiedPage;
+import com.ezdi.ocr.dto.pdftotext.Page;
+import com.ezdi.ocr.pdftotext.loader.PdfToTextHtmlLoader;
+import com.ezdi.ocr.pdftotext.separator.ColumnSeparator;
+import com.ezdi.ocr.pdftotext.separator.PdfToTextTextGenerator;
+
+public class PdfToTextBlockDualColumnText
+{
+	public static void main(String[] args) throws IOException, SAXException
+	{
+		//		for (File file : new File("/home/vivekkumar/EandMTXT/PEP_PDF/PDF/").listFiles())
+		//		{
+		File file = new File("");
+		String filePath = file.getAbsolutePath().replace(".pdf", "");
+
+		System.out.println(filePath);
+		String html = filePath + ".html";
+
+		List<Page> pages = PdfToTextHtmlLoader.loadPages(html);
+		List<DualIdentifiedPage> correctedPages = ColumnSeparator.getCorrectedPages(pages);
+
+		String text = "/home/vivekkumar/EandMTXT/PEP_PDF/Text3/" + file.getName().replace(".pdf", ".txt");
+		FileWriter fw = new FileWriter(text);
+		for (String line : PdfToTextTextGenerator.printCorrectedText(correctedPages))
+		{
+			fw.write(line);
+			fw.write("\n");
+		}
+		fw.close();
+		//		}
+	}
+
+}

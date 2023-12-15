@@ -1,0 +1,110 @@
+package com.ezdi.ocr.pdftotext.highlight;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.List;
+
+import javax.imageio.ImageIO;
+
+import org.xml.sax.SAXException;
+
+import com.ezdi.ocr.dto.common.Line;
+import com.ezdi.ocr.dto.pdftotext.DualIdentifiedPage;
+import com.ezdi.ocr.dto.pdftotext.Page;
+import com.ezdi.ocr.highlight.Highlighter;
+import com.ezdi.ocr.pdf.loader.PdfLoader;
+import com.ezdi.ocr.pdftotext.loader.PdfToTextHtmlLoader;
+import com.ezdi.ocr.pdftotext.separator.ColumnSeparator;
+import com.ezdi.ocr.pdftotext.separator.PdfToTextTextGenerator;
+
+/**
+ * @startuml Json -> Page: Loading json into pojo Bob --> Alice: Authentication
+ *           Response Alice -> Bob: Another authentication Request Alice <--
+ *           Bob: Another authentication Response
+ * @enduml
+ *
+ */
+
+public class PdfToTextBlockDualColumnHighlighter {
+	public static void main(String[] args) throws IOException, SAXException
+	{
+		String rootFolder = "/home/trishalaswain/Downloads/DualCHS1475 (1)/DualCHS1475_COPY/TEST_SINGLE";
+
+		for (File file : new File(rootFolder + "pdfs/").listFiles())
+//			for (File file : new File(rootFolder + "PDF/").listFiles())
+		{
+			if (!file.getName().endsWith(".pdf"))
+			{
+				continue;
+			}
+
+			String fileName = file.getName().replace("_.pdf", "");
+			System.out.println(fileName);
+	
+			String pdf = rootFolder + "pdfs/" + fileName + "_.pdf";
+			String xml = rootFolder + "xmls/" + file.getName() + ".xml";
+			
+			
+	//		String fileName = file.getName().replace(".pdf", "");
+	//		System.out.println(fileName);
+	//
+	//		String filePath = "/home/vivekkumar/EandMTXT/PEP_PDF/PDF/" + fileName;
+	//		String pdf = filePath + ".pdf";
+	//
+	//		String html = "/home/vivekkumar/EandMTXT/PEP_PDF/HTML/" + fileName + ".html";
+	
+			List<Page> pages = PdfToTextHtmlLoader.loadPages(xml);
+	
+			List<DualIdentifiedPage> correctedPages = ColumnSeparator.getCorrectedPages(pages);
+			//		double separatorX = ColumnSeparator.getVerticalLineXCoordinate(pages);
+	
+			for (DualIdentifiedPage page : correctedPages)
+			{
+				int pageNum = page.getIndex();
+				System.out.println(pageNum);
+	
+				BufferedImage bim = PdfLoader.getPageImage(new File(pdf), pageNum);
+				Graphics2D g2d = bim.createGraphics();
+	
+				g2d.setStroke(new BasicStroke(2));
+	
+				//			Highlighter.drawQuadrilateralOnImage(g2d, Color.BLUE, ColumnSeparator.getIdentifierVertices(separatorX), bim.getWidth(), bim.getHeight());
+	
+				for (Line block : page.getLeft())
+				{
+					Highlighter.drawQuadrilateralOnImage(g2d, Color.GREEN, block.getVertices(), bim.getWidth(), bim.getHeight());
+				}
+				for (Line block : page.getRight())
+				{
+					Highlighter.drawQuadrilateralOnImage(g2d, Color.RED, block.getVertices(), bim.getWidth(), bim.getHeight());
+				}
+				for (Line block : page.getOther())
+				{
+					Highlighter.drawQuadrilateralOnImage(g2d, Color.BLUE, block.getVertices(), bim.getWidth(), bim.getHeight());
+				}
+	
+				g2d.dispose();
+				
+				File f1 = new File(rootFolder + "image_output/" + fileName);		
+				f1.mkdir();
+				
+				ImageIO.write(bim, "png", new File(rootFolder + "image_output/" + fileName + "/" + fileName +  "_Page_" + pageNum + ".png"));
+			}
+	
+			String text = rootFolder + "text/" + file.getName().replace("_.pdf", ".txt");
+			FileWriter fw = new FileWriter(text);
+			for (String line : PdfToTextTextGenerator.printCorrectedText(correctedPages))
+			{
+				fw.write(line);
+				fw.write("\n");
+			}
+			fw.close();
+		}
+	}
+
+}

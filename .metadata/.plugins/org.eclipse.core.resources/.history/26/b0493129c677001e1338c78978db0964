@@ -1,0 +1,42 @@
+package com.ezdi.ocr.dto.pdftotext;
+
+import java.util.List;
+
+public class Page
+{
+	private int			index;
+	private double		width;
+	private double		height;
+
+	private List<Block>	blocks;
+
+	public Page(int index, double width, double height, List<Block> blocks)
+	{
+		this.index = index;
+		this.width = width;
+		this.height = height;
+
+		this.blocks = blocks;
+	}
+
+	public int getIndex()
+	{
+		return index;
+	}
+
+	public double getWidth()
+	{
+		return width;
+	}
+
+	public double getHeight()
+	{
+		return height;
+	}
+
+	public List<Block> getBlocks()
+	{
+		return blocks;
+	}
+
+}

@@ -1,0 +1,198 @@
+package com.ezdi.ocr.pdftotext.highlight;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
+import org.xml.sax.SAXException;
+
+import com.ezdi.ocr.dto.common.Line;
+import com.ezdi.ocr.dto.common.Point;
+import com.ezdi.ocr.dto.common.Range;
+import com.ezdi.ocr.dto.pdftotext.Block;
+import com.ezdi.ocr.dto.pdftotext.Page;
+import com.ezdi.ocr.dto.pdftotext.Paragraph;
+import com.ezdi.ocr.pdftotext.loader.PdfToTextHtmlLoader;
+
+public class PdfToTextRangeOrdered
+{
+	public static void main(String[] args) throws IOException, SAXException
+	{
+		String fileName = "/home/vivekkumar/EandMTXT/PEP_PDF/PDF/5533827_13154599_doc";
+		//		String pdf = fileName + ".pdf";
+		String html = fileName + ".html";
+
+		List<Page> pages = PdfToTextHtmlLoader.loadPages(html);
+		for (Page page : pages)
+		{
+			//			int pageNum = page.getIndex();
+			//			System.out.println(pageNum);
+
+			List<Range> merged = merge(new ArrayList<>(getRanges(page)));
+
+			Map<Range, Map<Range, String>> map = new TreeMap<>();
+
+			double imageHeight = page.getHeight();
+			double imageWidth = page.getWidth();
+
+			for (Block block : page.getBlocks())
+			{
+				for (Paragraph p : block.getParagraphs())
+				{
+					for (Line line : p.getLines())
+					{
+						List<Point> vertices = line.getVertices();
+
+						int x1 = Math.min((int) Math.floor(vertices.get(0).getX() * imageWidth), (int) Math.floor(vertices.get(1).getX() * imageWidth));
+						int y1 = Math.min((int) Math.floor(vertices.get(0).getY() * imageHeight), (int) Math.floor(vertices.get(1).getY() * imageHeight));
+						int x2 = Math.max((int) Math.floor(vertices.get(2).getX() * imageWidth), (int) Math.floor(vertices.get(3).getX() * imageWidth));
+						int y2 = Math.max((int) Math.floor(vertices.get(2).getY() * imageHeight), (int) Math.floor(vertices.get(3).getY() * imageHeight));
+
+						Range toSearch = new Range(y1, y2);
+
+						Range key = findKey(toSearch, merged);
+						Map<Range, String> innerMap = map.get(key);
+						if (innerMap == null)
+						{
+							innerMap = new TreeMap<>();
+							map.put(key, innerMap);
+						}
+
+						innerMap.put(new Range(x1, x2), line.getText());
+					}
+				}
+			}
+			getTextForPage(map);
+		}
+	}
+
+	private static Set<Range> getRanges(Page page)
+	{
+		Set<Range> rangeSet = new TreeSet<>();
+
+		double imageHeight = page.getHeight();
+		for (Block block : page.getBlocks())
+		{
+			for (Paragraph p : block.getParagraphs())
+			{
+				for (Line line : p.getLines())
+				{
+					List<Point> vertices = line.getVertices();
+
+					int y1 = Math.min((int) Math.floor(vertices.get(0).getY() * imageHeight), (int) Math.floor(vertices.get(1).getY() * imageHeight));
+					int y2 = Math.max((int) Math.floor(vertices.get(2).getY() * imageHeight), (int) Math.floor(vertices.get(3).getY() * imageHeight));
+
+					rangeSet.add(new Range(y1, y2));
+				}
+			}
+		}
+
+		return rangeSet;
+	}
+
+	private static void getTextForPage(Map<Range, Map<Range, String>> map)
+	{
+		StringBuilder sb = new StringBuilder();
+
+		for (Map<Range, String> innerMap : map.values())
+		{
+			int prevEnd = 0;
+			for (Entry<Range, String> entry : innerMap.entrySet())
+			{
+				Range key = entry.getKey();
+
+				for (int i = prevEnd; i < key.getStart(); i += 4)
+				{
+					sb.append(" ");
+				}
+
+				sb.append(entry.getValue());
+				prevEnd = key.getEnd();
+			}
+			sb.append("\n");
+		}
+
+		System.out.println(sb.toString());
+	}
+
+	private static Range findKey(Range toSearch, List<Range> merged)
+	{
+		for (Range range : merged)
+		{
+			if (range.contains(toSearch))
+			{
+				return range;
+			}
+		}
+
+		return null;
+	}
+
+	public static List<Range> merge(List<Range> sortedIntervals)
+	{
+		List<Range> mergedIntervals = new ArrayList<>();
+		int idx = 0;
+		while (idx < sortedIntervals.size())
+		{
+			int currentStart = sortedIntervals.get(idx).getStart();
+			int currentEnd = sortedIntervals.get(idx).getEnd();
+			idx++;
+			while (idx < sortedIntervals.size()
+					&& sortedIntervals.get(idx).getStart() <= currentEnd)
+			{
+				if (areOverlapping(currentStart, currentEnd, sortedIntervals.get(idx).getStart(), sortedIntervals.get(idx).getEnd()))
+				{
+					currentEnd = Math.max(sortedIntervals.get(idx).getEnd(), currentEnd);
+				}
+				else
+				{
+					mergedIntervals.add(new Range(currentStart, currentEnd));
+					currentStart = sortedIntervals.get(idx).getStart();
+					currentEnd = sortedIntervals.get(idx).getEnd();
+				}
+
+				idx++;
+			}
+			mergedIntervals.add(new Range(currentStart, currentEnd));
+		}
+
+		return mergedIntervals;
+	}
+
+	private static boolean areOverlapping(int start1, int end1, int start2, int end2)
+	{
+		if ((start1 <= start2
+				&& end2 <= end1)
+				|| (start2 <= start1
+						&& end1 <= end2))
+		{
+			return true;
+		}
+
+		int minStart = start1;
+		int minEnd = end1;
+		int maxStart = start1;
+		int maxEnd = end1;
+
+		if (start2 > start1)
+		{
+			maxStart = start2;
+		}
+
+		if (end2 > end1)
+		{
+			maxEnd = end2;
+		}
+
+		if (((maxEnd - minStart) - (minEnd - maxStart) / (double) (maxEnd - minStart)) < 15.0)
+		{
+			return true;
+		}
+		return false;
+	}
+}

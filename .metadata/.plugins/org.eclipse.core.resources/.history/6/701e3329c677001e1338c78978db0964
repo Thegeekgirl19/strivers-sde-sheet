@@ -1,0 +1,35 @@
+package com.ezdi.ocr.highlight;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.util.List;
+
+import com.ezdi.ocr.dto.common.Point;
+
+public class Highlighter
+{
+	public static void drawQuadrilateralOnImage(Graphics2D g2d, Color color, List<Point> vertices, int imageWidth, int imageHeight)
+	{
+		g2d.setColor(color);
+		for (int i = 0; i < vertices.size(); i++)
+		{
+			int x1 = (int) Math.floor(vertices.get(i).getX() * imageWidth);
+			int y1 = (int) Math.floor(vertices.get(i).getY() * imageHeight);
+
+			int x2, y2;
+			if (i == vertices.size() - 1)
+			{
+				x2 = (int) Math.ceil(vertices.get(0).getX() * imageWidth);
+				y2 = (int) Math.ceil(vertices.get(0).getY() * imageHeight);
+			}
+			else
+			{
+				x2 = (int) Math.ceil(vertices.get(i + 1).getX() * imageWidth);
+				y2 = (int) Math.ceil(vertices.get(i + 1).getY() * imageHeight);
+			}
+
+			g2d.drawLine(x1, y1, x2, y2);
+		}
+
+	}
+}
