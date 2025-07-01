@@ -1,9 +1,0 @@
-package com.ezdi.ocr.dto.common;
-
-public enum BlockType
-{
-	LINE,
-	WORD,
-	PARAGRAPH,
-	BLOCK;
-}
